@@ -1,0 +1,62 @@
+﻿services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ratreacom_app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      SERPAPI_KEY: ${SERPAPI_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+    depends_on:
+      mongo:
+        condition: service_started
+    command: npm run dev
+    restart: always
+    networks:
+      - rastrea_network
+
+  mongo:
+    image: mongo:7
+    container_name: ratreacom_db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root123
+      MONGO_INITDB_DATABASE: ratreacom
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rastrea_network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: ratreacom_express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: ratreacom_db
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root123
+      ME_CONFIG_MONGODB_AUTH_DATABASE: admin
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongo:
+        condition: service_started
+    restart: always
+    networks:
+      - rastrea_network
+
+volumes:
+  mongo_data:
+
+networks:
+  rastrea_network:
+    driver: bridge
